@@ -26,12 +26,16 @@ class PDController:
         self.prev_time = 0
         self.prev_error = None
         self.output = 0
+        self.output_max = 2.5
         # Part of PID DEBUG
         self.output_data = np.array([[0, 0, 0, 0]])
 
     def run(self, x, t):
-        kp = 0
-        kd = 0
+        # kp = 0.2
+        # kd = 0.75
+        # when using self.output_max
+        kp = 1.5
+        kd = 2.5
 
         # Controller run time.
         if t - self.prev_time < 0.05:
@@ -42,23 +46,29 @@ class PDController:
             # INSERT CODE BELOW
 
             # Calculate error.
-
+            e = self.r -x
             # Calculate proportional control output.
-            P_out = 0
+            P_out = kp*e
 
             # Calculate derivative control output.
             # HINT: Use self.prev_error to store old
             # error values and dt for time difference.
             if self.prev_error != None:
-                D_out = 0
+                D_out = kd*(e - self.prev_error)/dt
+                self.prev_error = e
             else:
                 D_out = 0
                 # Set this to error.
-                self.prev_error = None
-
+                self.prev_error = e
             # Calculate final output.
             self.output = P_out + D_out
 
+
+            #set max and min output:
+            if self.output > self.output_max:
+                self.output = self.output_max
+            elif self.output < self.output_max*-1:
+                self.output = self.output_max*-1
             # INSERT CODE ABOVE
             I_out = 0
             self.output_data = np.concatenate((self.output_data, \

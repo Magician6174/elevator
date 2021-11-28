@@ -11,7 +11,7 @@ options['GRAVITY'] = True
 options['FRICTION'] = True
 options['ELEVATOR_MASS'] = 1000
 options['COUNTERWEIGHT_MASS'] = 1000
-options['PEOPLE_MASS'] = 100
+options['PEOPLE_MASS'] = 200
 # Also try 200, 50, and -200.
 
 # Controller Options
@@ -28,13 +28,15 @@ class PIDController:
         self.prev_error = None
         self.integral = 0
         self.output = 0
+        self.output_max = 2.5
+        self.windup = 5
         # Part of PID DEBUG
         self.output_data = np.array([[0, 0, 0, 0]])
 
     def run(self, x, t):
-        kp = 0
-        ki = 0
-        kd = 0
+        kp = 1.5
+        ki = 0.25
+        kd = 2.5
 
         # Controller run time.
         if t - self.prev_time < 0.05:
@@ -45,27 +47,39 @@ class PIDController:
             # INSERT CODE BELOW
 
             # Calculate error.
+            e = self.r - x
 
             # Calculate proportional control output.
-            P_out = 0
+            P_out = kp * e
 
 
             # Calculate integral control output.
             # HINT: Use self.integral to store
             # integral values and dt for time difference.
-            I_out = 0
+            self.integral += e * dt
+            # prevent windup
+            if self.integral > self.windup:
+                self.integral = self.windup
+            elif self.integral < -self.windup:
+                self.integral = -self.windup
+            I_out = ki * self.integral
 
             # Calculate derivative control output.
             if self.prev_error != None:
-                D_out = 0
+                D_out = kd*(e - self.prev_error)/dt
+                self.prev_error = e
             else:
                 D_out = 0
                 # Set this to error.
-                self.prev_error = None
+                self.prev_error = e
 
             # Calculate final output.
             self.output = P_out + I_out + D_out
 
+            if self.output > self.output_max:
+                self.output = self.output_max
+            elif self.output < self.output_max*-1:
+                self.output = self.output_max*-1
             # INSERT CODE ABOVE
             self.output_data = np.concatenate((self.output_data, \
                 np.array([[t, P_out, I_out, D_out]])))
